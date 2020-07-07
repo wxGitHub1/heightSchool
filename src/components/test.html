@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>标注和标注图层</title>
+    <link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css"/>
+    <style>
+        html, body, #container {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+<div id="container"></div>
+<script type="text/javascript"
+        src="https://webapi.amap.com/maps?v=1.4.15&key=您申请的key值"></script>
+<script type="text/javascript" src="https://a.amap.com/jsapi_demos/static/demo-center/data/food_1.4.15.js"></script>
+<script type="text/javascript">
+    var map = new AMap.Map('container', {
+        zoom: 9,
+        showLabel: false,
+        expandZoomRange: true,
+        center: [116.12, 39.11],
+        viewMode: '3D',
+        pitch: 60,
+        mapStyle: 'amap://styles/whitesmoke'
+    });
+
+    var layer = new AMap.LabelsLayer({
+        zooms: [3, 20],
+        zIndex: 1000,
+        // 开启标注避让，默认为开启，v1.4.15 新增属性
+        collision: true,
+        // 开启标注淡入动画，默认为开启，v1.4.15 新增属性
+        animation: true,
+    });
+
+    map.add(layer);
+
+    var markers = [];
+
+    for (var i = 0; i < LabelsData.length; i++) {
+        var curData = LabelsData[i];
+        curData.extData = {
+            index: i
+        };
+
+        var labelMarker = new AMap.LabelMarker(curData);
+
+        markers.push(labelMarker);
+
+        layer.add(labelMarker);
+    }
+  	 var newMarker = {
+        name: 'test',
+        position: [116.452483, 39.992492],
+        zooms: [10, 20],
+        opacity: 1,
+        zIndex: 4,
+        text: {
+            content: 'tesasdfsfasdsd fasdfad &lt;br/&gt; fdsfasdfasfdsfasat',
+            direction: 'top',
+            offset: [0, 0],
+            style: {
+                fontSize: 13,
+                fontWeight: 'normal',
+                fillColor: '#fff',
+                padding: '2, 5',
+                backgroundColor: '#22884f'
+            }
+        }
+    }
+  
+  
+ layer.add(new AMap.LabelMarker(newMarker));
+  
+   
+
+    map.setFitView();
+</script>
+</body>
+</html>

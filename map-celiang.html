@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css" type="text/css">
+    <style>
+      html,body,#container{
+        height: 100%
+      }
+      .input-item{
+        height: 2.2rem;
+      }
+      .btn{
+        width: 6rem;
+        margin: 0 1rem 0 2rem;
+      }
+      .input-text{
+        width: 4rem;
+        margin-right:1rem;
+      }
+    </style>
+    <title>鼠标工具绘制</title>
+  </head>
+  <body>
+    <div id='container'></div>
+    <div class='info'>操作说明：圆和矩形通过拖拽来绘制，其他覆盖物通过点击来绘制</div>
+    <div class="input-card" style='width: 24rem;'>
+        <div class="input-item">
+          <input type="radio" name='func' checked="" value='marker'><span class="input-text">画点</span>
+          <input type="radio" name='func' value='polyline'><span class="input-text">画折线</span>
+          <input type="radio" name='func' value='polygon'><span class="input-text" style='width:5rem;'>画多边形</span>
+        </div>
+        <div class="input-item">
+          <input type="radio" name='func' value='rectangle'><span class="input-text">画矩形</span>
+          <input type="radio" name='func' value='circle'><span class="input-text">画圆</span>
+        </div>
+        <div class="input-item">
+            <input id="clear" type="button" class="btn" value="清除" />
+          <input id="close" type="button" class="btn" value="关闭绘图" />
+        </div>
+    </div>
+    <div class="info" style="min-width: 350px;">
+        <h4>Object3D 拾取信息</h4>
+        <p>选中的 Mesh ID：<span id="mesh-id">--</span></p>
+        <p>选中的 face 所在的索引：<span id="face-index">--</span></p>
+        <p>交叉点距透视原点的距离：<span id="distance">--</span></p>
+        <p>与拾取对象的交叉点：
+            <span id="cross-point">--</span>
+        </p>
+    </div>
+    <script src="https://webapi.amap.com/maps?v=1.4.15&key=您申请的key值&plugin=AMap.MouseTool"></script>
+    <script type="text/javascript">
+    var map = new AMap.Map('container',{
+        viewMode: '3D', // 开启 3D 模式
+        expandZoomRange: true,
+        zooms: [3, 20],
+        pitch: 55,
+        rotation: 35,
+        zoom:18,
+         layers: [
+             // 卫星
+             new AMap.TileLayer.Satellite(),
+             // 路网
+             new AMap.TileLayer.RoadNet()
+        ],
+        center:[108.990804, 34.120829]
+    });
+   map.setDefaultCursor("default");
+    // 设置光照
+    map.AmbientLight = new AMap.Lights.AmbientLight([1, 1, 1], 0.5);
+    map.DirectionLight = new AMap.Lights.DirectionLight([0, 0, 1], [1, 1, 1], 1);
+
+    // 添加 Object3DLayer 图层，用于添加 3DObject 对象
+   var object3Dlayer = new AMap.Object3DLayer();
+   map.add(object3Dlayer);
+
+
+
+   var prismes = [];
+   var selectColor = [0 / 255, 245 / 255, 47 / 255, 0.9];
+
+   var selectColor2 = [255 / 255, 245 / 255, 47 / 255, 0.9];
+   // prism 拾取
+   map.on('mousemove', function (ev) {
+       var pixel = ev.pixel;
+       var px = new AMap.Pixel(pixel.x, pixel.y);
+       var obj = map.getObject3DByContainerPos(px, [object3Dlayer], false) || {};
+
+       // 选中的 face 所在的索引
+       var index = obj.index;
+       // 选中的 object3D 对象，这里为当前 Mesh
+       var object = obj.object;
+       // 被拾取到的对象和拾取射线的交叉点的3D坐标
+       var point = obj.point;
+       // 交叉点距透视原点的距离
+       var distance = obj.distance;
+
+       updateInfo(obj);
+       updateMesh(object);
+   });
+
+   map.on('click', function (ev) {
+       var pixel = ev.pixel;
+       var px = new AMap.Pixel(pixel.x, pixel.y);
+       var obj = map.getObject3DByContainerPos(px, [object3Dlayer], false) || {};
+
+       // 选中的 face 所在的索引
+       var index = obj.index;
+       // 选中的 object3D 对象，这里为当前 Mesh
+       var object = obj.object;
+       // 被拾取到的对象和拾取射线的交叉点的3D坐标
+       var point = obj.point;
+       // 交叉点距透视原点的距离
+       var distance = obj.distance;
+
+       if(object){
+
+         updateMeshColor(object,selectColor2);
+       }
+       // updateInfo(obj);
+   });
+
+   function updateMesh(obj) {
+
+     if(isNil(obj)){
+
+         return;
+     }
+        var mesh = prismes.find(function (mesh) {
+
+            return mesh == obj;
+        });
+
+        var mesh = obj;
+        // 重置 Mesh 颜色
+        // updateMeshColor(mesh, selectColor);
+        prismes.forEach(function (mesh) {
+            updateMeshColor(mesh, selectColor);
+        });
+
+        // 更新选中 Mesh 的 vertexColors
+        if (mesh) {
+            updateMeshColor(mesh, selectColor);
+        }
+
+    }
+
+
+   function updateInfo(obj) {
+       var $meshId = document.getElementById('mesh-id');
+       var $faceIndex = document.getElementById('face-index');
+       var $crossPoint = document.getElementById('cross-point');
+       var $distance = document.getElementById('distance');
+
+       $meshId.innerHTML = (!isNil(obj.object) && !isNil(obj.object.id)) ? obj.object.id : '--';
+       $faceIndex.innerHTML = !isNil(obj.index) ? obj.index : '--';
+       $distance.innerHTML = !isNil(obj.distance) ? obj.distance : '--';
+       var p = '--';
+       if (obj.point) {
+           p = [
+               '',
+               'X: ' + obj.point[0],
+               'Y: ' + obj.point[1],
+               'Z: ' + obj.point[2]
+           ].join('<br>');
+       }
+
+       $crossPoint.innerHTML = p;
+   }
+
+   function updateMeshColor(mesh, color) {
+       var vertexColors = mesh.geometry.vertexColors;
+       var len = vertexColors.length;
+       for (var i = 0; i < len / 4; i++) {
+
+
+           var r = color[0];
+           var g = color[1];
+           var b = color[2];
+           var a = color[3];
+           // 不能重新赋值，只允许修改内容
+           vertexColors.splice(i * 4, 4, r, g, b, a);
+
+       }
+
+       mesh.needUpdate = true;
+       mesh.reDraw();
+     }
+
+
+   function isNil(obj) {
+       return obj == undefined;
+   }
+
+    var mouseTool = new AMap.MouseTool(map);
+    //监听draw事件可获取画好的覆盖物
+    var overlays = [];
+
+    mouseTool.on('draw',function(e){
+        overlays.push(e.obj);
+
+        var paths = e.obj.getPath();
+        // alert(paths);
+
+         var bounds = paths.map(function(path) {
+           
+           return path;
+        });
+        bounds.forEach(function(p){
+          console.log('['+p.lng+','+p.lat+']'+',')
+        })
+
+        // 创建 Object3D 对象
+      var prism = new AMap.Object3D.Prism({
+          path: bounds,
+          height: 100,
+          color: 'rgba(8,203,245, 0.7)' // 支持 #RRGGBB、rgb()、rgba() 格式数据
+      });
+      prismes.push(prism);
+
+      // 开启透明度支持
+      prism.transparent = true;
+
+      // 添加至 3D 图层
+      object3Dlayer.add(prism);
+
+
+
+    })
+
+    function draw(type){
+      switch(type){
+        case 'marker':{
+            mouseTool.marker({
+              //同Marker的Option设置
+            });
+            break;
+        }
+        case 'polyline':{
+            mouseTool.polyline({
+              strokeColor:'#80d8ff'
+              //同Polyline的Option设置
+            });
+            break;
+        }
+        case 'polygon':{
+            mouseTool.polygon({
+              fillColor:'#00b0ff',
+              strokeColor:'#80d8ff'
+              //同Polygon的Option设置
+            });
+            break;
+        }
+        case 'rectangle':{
+            mouseTool.rectangle({
+              fillColor:'#00b0ff',
+              strokeColor:'#80d8ff'
+              //同Polygon的Option设置
+            });
+            break;
+        }
+        case 'circle':{
+            mouseTool.circle({
+              fillColor:'#00b0ff',
+              strokeColor:'#80d8ff'
+              //同Circle的Option设置
+            });
+            break;
+        }
+      }
+    }
+    var radios = document.getElementsByName('func');
+    for(var i=0;i<radios.length;i+=1){
+        radios[i].onchange = function(e){
+
+          draw(e.target.value)
+        }
+    }
+    draw('marker')
+
+    document.getElementById('clear').onclick = function(){
+        map.remove(overlays)
+        overlays = [];
+    }
+    document.getElementById('close').onclick = function(){
+        mouseTool.close(true)//关闭，并清除覆盖物
+        for(var i=0;i<radios.length;i+=1){
+            radios[i].checked = false;
+        }
+    }
+    </script>
+  </body>
+</html>
