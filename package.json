@@ -12,22 +12,22 @@
     "core-js": "^2.6.5",
     "echarts": "^4.2.1",
     "element-ui": "^2.9.1",
-    "file-loader": "^4.0.0",
+    "file-loader": "^6.2.0",
     "vue": "^2.6.10",
     "vue-axios": "^2.1.4",
     "vue-echarts": "^4.0.3",
     "vue-router": "^3.0.6"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "^3.8.0",
-    "@vue/cli-plugin-eslint": "^3.8.0",
-    "@vue/cli-service": "^3.8.0",
+    "@vue/cli-plugin-babel": "^5.0.8",
+    "@vue/cli-plugin-eslint": "^5.0.8",
+    "@vue/cli-service": "^5.0.8",
     "babel-eslint": "^10.0.1",
-    "css-loader": "^3.0.0",
+    "css-loader": "^6.7.3",
     "eslint": "^5.16.0",
     "eslint-plugin-vue": "^5.0.0",
     "node-sass": "^4.12.0",
-    "sass-loader": "^7.1.0",
+    "sass-loader": "^13.2.0",
     "vue-template-compiler": "^2.6.10"
   },
   "eslintConfig": {
